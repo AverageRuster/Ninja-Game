@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class SpawnController : MonoBehaviour
 {
-    float spawnCooldown = 3;
-    bool canSpawnEnemy;
-    bool allCoroutinesStopped;
+    private float spawnCooldown = 3;
+    private bool canSpawnEnemy;
+    private bool allCoroutinesStopped;
+    [SerializeField] private GameObject leftWall;
+    [SerializeField] private GameObject rightWall;
 
     private void Awake()
     {
@@ -34,7 +36,9 @@ public class SpawnController : MonoBehaviour
             GameObject enemy = ObjectPooler.main.SpawnEnemy();
             if (enemy != null)
             {
-                enemy.transform.position = new Vector3(0, 10, 0);
+                float randomXPos = Random.Range(leftWall.transform.position.x + 1, rightWall.transform.position.x - 1);
+                Vector3 enemySpawnPoint = new Vector3(randomXPos, 10, 0);
+                enemy.transform.position = enemySpawnPoint;
                 enemy.SetActive(true);
                 StartCoroutine(EnemySpawnCooldown());
             }

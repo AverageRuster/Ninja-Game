@@ -8,6 +8,7 @@ TagManager:
   - Enemy
   - Floor Enemy
   - Ceiling
+  - Obstacle
   layers:
   - Default
   - TransparentFX
@@ -47,4 +48,10 @@ TagManager:
     locked: 0
   - name: Player
     uniqueID: 3248100941
+    locked: 0
+  - name: Wall
+    uniqueID: 3263371927
+    locked: 0
+  - name: Enemy
+    uniqueID: 1168353935
     locked: 0

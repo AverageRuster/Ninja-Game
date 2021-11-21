@@ -7,7 +7,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private Camera mainCamera;
 
-    Rigidbody2D rb;
+    private Rigidbody2D rb;
+    private Animator animator;
 
     private Vector3 touchTargetPoint;
     private Vector3 movementVector;
@@ -17,23 +18,67 @@ public class PlayerController : MonoBehaviour
     private float playerSpeed = 10000;
     private float maxPlayerSpeed = 20;
 
+    GameObject obstacleToAttach;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
     }
 
     private void Update()
     {
         SetGravity();
         GetControlls();
+        SetAnimation();
     }
 
     private void FixedUpdate()
     {
-        //Двигаем игрока
-        if (isPlayerMoving && rb.velocity.magnitude < maxPlayerSpeed)
+        //Проверяем, прикреплен ли игрок к препятствию
+        if (obstacleToAttach == null)
         {
-            rb.AddForce(movementVector * playerSpeed * Time.fixedDeltaTime);
+            //Двигаем игрока
+            if (isPlayerMoving && rb.velocity.magnitude < maxPlayerSpeed)
+            {
+                rb.AddForce(movementVector * playerSpeed * Time.fixedDeltaTime);
+            }
+        }
+
+        else
+        {        
+            //Смотрим, к какой стороне его прикрепить
+            float xPos = obstacleToAttach.transform.position.x;
+            float yPos = obstacleToAttach.transform.position.y;
+            if (Mathf.Abs(transform.position.x - xPos) > Mathf.Abs(transform.position.y - yPos))
+            {
+                // Крепим игрока справа
+                if (transform.position.x > xPos)
+                {
+                    xPos += 1;
+                }
+                //Крепим игрока слева
+                else
+                {
+                    xPos -= 1;
+                }
+            }
+            else
+            {
+                //Крепим игрока сверху
+                if (transform.position.y > yPos)
+                {
+                    yPos += 1;
+                }
+                //Крепим игрока снизу
+                else
+                {
+                    yPos -= 1;
+                }
+            }
+
+            Vector3 targetPos = new Vector3(xPos, yPos);
+            rb.MovePosition(targetPos);
         }
     }
 
@@ -52,29 +97,63 @@ public class PlayerController : MonoBehaviour
 
     private void GetControlls()
     {
-        if (!isPlayerMoving && Input.touchCount > 0)
+        if (Input.touchCount > 0)
         {
             Touch mainTouch;
 
             //Берем самое первое касание
             mainTouch = Input.GetTouch(0);
 
-            //Если касание только началось или если игрок ведет палец по экрану, запоминаем его позицию как целевую
-            if (mainTouch.phase == TouchPhase.Began || mainTouch.phase == TouchPhase.Moved)
-            {               
-                touchTargetPoint = mainCamera.ScreenToWorldPoint(mainTouch.position);
-            }
-
-            //Если игрок отпустил палец, начинаем движение
-            else if (mainTouch.phase == TouchPhase.Ended)
+            if (!isPlayerMoving)
             {
-                movementVector = (touchTargetPoint - transform.position + new Vector3(0, 0, 10)).normalized;
-                if (isPlayerOnTheLeftWall && movementVector.x > 0 || !isPlayerOnTheLeftWall && movementVector.x < 0)
+                //Если касание только началось или если игрок ведет палец по экрану, запоминаем его позицию как целевую
+                if (mainTouch.phase == TouchPhase.Began || mainTouch.phase == TouchPhase.Moved)
                 {
-                    rb.velocity = Vector3.zero;
-                    isPlayerMoving = true;
+                    touchTargetPoint = mainCamera.ScreenToWorldPoint(mainTouch.position);
+                }
+
+                //Если игрок отпустил палец, начинаем движение
+                else if (mainTouch.phase == TouchPhase.Ended)
+                {
+                    movementVector = (touchTargetPoint - transform.position + new Vector3(0, 0, 10)).normalized;
+                    if (obstacleToAttach != null)
+                    {
+                        obstacleToAttach = null;
+                    }
+                    if (isPlayerOnTheLeftWall && movementVector.x > 0 || !isPlayerOnTheLeftWall && movementVector.x < 0)
+                    {
+                        rb.velocity = Vector3.zero;
+                        isPlayerMoving = true;
+                    }
                 }
             }
+            else
+            {
+                if (mainTouch.phase == TouchPhase.Began)
+                {                  
+                    rb.velocity = Vector3.zero;
+                    if (movementVector.x >= 0)
+                    {
+                        movementVector = new Vector3(-0.5f, 0.5f, 0);
+                    }
+                    else
+                    {
+                        movementVector = new Vector3(0.5f, 0.5f, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    private void SetAnimation()
+    {
+        if (isPlayerOnTheLeftWall)
+        {
+            animator.Play("LeftWallIdle");
+        }
+        else
+        {
+            animator.Play("RightWallIdle");
         }
     }
 
@@ -86,37 +165,44 @@ public class PlayerController : MonoBehaviour
             //Левая стенка
             if (transform.position.x < 0)
             {
-                transform.position = new Vector3(collision.transform.position.x + 1, transform.position.y, transform.position.z);
+                rb.MovePosition(new Vector3(collision.transform.position.x + 1, transform.position.y, transform.position.z));
                 isPlayerOnTheLeftWall = true;
             }
 
             //Правая стенка
             else
             {
-                transform.position = new Vector3(collision.transform.position.x - 1, transform.position.y, transform.position.z);
+                rb.MovePosition(new Vector3(collision.transform.position.x - 1, transform.position.y, transform.position.z));
                 isPlayerOnTheLeftWall = false;
             }
             rb.velocity = Vector3.zero;
             isPlayerMoving = false;
         }
 
-        //Игрок попал по врагу, убиваем врага
+        //Игрок попал по врагу, режем его пополам
         if (collision.CompareTag("Enemy"))
         {
-            
-            collision.gameObject.SetActive(false);
+            bool horizoltalCutDirection = isPlayerMoving && movementVector.x > movementVector.y;
+            collision.GetComponent<EnemyController>().KillEnemy(horizoltalCutDirection);
         }
 
         //Игрок попал в потолок
         if (collision.CompareTag("Ceiling"))
         {
-            movementVector = new Vector3(movementVector.x / 2, -movementVector.y, movementVector.z);
+            movementVector = new Vector3(movementVector.x / 2, -movementVector.y / 2, movementVector.z);
+        }
+
+        //Игрок цепляется за препятствие
+        if (collision.CompareTag("Obstacle"))
+        {            
+            obstacleToAttach = collision.gameObject;
+            isPlayerMoving = false;
         }
 
         //Конец игры, игрок упал
         if (collision.CompareTag("Floor Enemy"))
         {
-            
+
         }
     }
 }

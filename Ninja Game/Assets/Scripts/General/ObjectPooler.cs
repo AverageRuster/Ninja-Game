@@ -8,7 +8,10 @@ public class ObjectPooler : MonoBehaviour
 
     [SerializeField] private GameObject enemy;  
     [SerializeField] private int enemiesCount;
-    private List<GameObject> enemies;
+    private List<GameObject> enemiesList;
+
+    [SerializeField] private GameObject enemyRemains;
+    private List<GameObject> enemyRemainsList;
 
     private void Start()
     {
@@ -18,13 +21,21 @@ public class ObjectPooler : MonoBehaviour
 
     private void InstantiateObjects()
     {
-        enemies = new List<GameObject>();
+        enemiesList = new List<GameObject>();
+        enemyRemainsList = new List<GameObject>();
         GameObject currentEnemy;
+        GameObject currentEnemyRemains;
         for (int i = 0; i < enemiesCount; i++)
         {
             currentEnemy = Instantiate(enemy);
-            enemies.Add(currentEnemy);
+            enemiesList.Add(currentEnemy);
             currentEnemy.SetActive(false);
+        }
+        for (int i = 0; i < enemiesCount * 2; i++)
+        {
+            currentEnemyRemains = Instantiate(enemyRemains);
+            enemyRemainsList.Add(currentEnemyRemains);
+            currentEnemyRemains.SetActive(false);
         }
     }
 
@@ -32,10 +43,22 @@ public class ObjectPooler : MonoBehaviour
     {
         for (int i = 0; i < enemiesCount; i++)
         {
-            if (!enemies[i].activeInHierarchy)
+            if (!enemiesList[i].activeInHierarchy)
             {
-                return enemies[i];
+                return enemiesList[i];
             }           
+        }
+        return null;
+    }
+
+    public GameObject SpawnEnemyRemains()
+    {
+        for (int i = 0; i < enemiesCount * 2; i++)
+        {
+            if (!enemyRemainsList[i].activeInHierarchy)
+            {
+                return enemyRemainsList[i];
+            }
         }
         return null;
     }
