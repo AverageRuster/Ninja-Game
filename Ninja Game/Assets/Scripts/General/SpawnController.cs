@@ -5,14 +5,13 @@ using UnityEngine;
 public class SpawnController : MonoBehaviour
 {
     private float spawnCooldown = 3;
-    private bool canSpawnEnemy;
+    private bool canSpawnObject = true;
     private bool allCoroutinesStopped;
     [SerializeField] private GameObject leftWall;
     [SerializeField] private GameObject rightWall;
 
     private void Awake()
     {
-        canSpawnEnemy = true;
         allCoroutinesStopped = false;
     }
 
@@ -20,7 +19,14 @@ public class SpawnController : MonoBehaviour
     {
         if (!GameManager.main.gameOver)
         {
-            SpawnEnemy();
+            if (Random.Range(0, 2) == 1)
+            {
+                SpawnObject(ObjectPooler.main.SpawnEnemy());
+            }
+            else
+            {
+                SpawnObject(ObjectPooler.main.SpawnObstacle());
+            }
         }
         else if (!allCoroutinesStopped)
         {
@@ -29,26 +35,26 @@ public class SpawnController : MonoBehaviour
         }
     }
 
-    private void SpawnEnemy()
+    private void SpawnObject(GameObject objToSpawn)
     {
-        if (canSpawnEnemy)
+        if (canSpawnObject)
         {
-            GameObject enemy = ObjectPooler.main.SpawnEnemy();
-            if (enemy != null)
+            GameObject obj = objToSpawn;
+            if (obj != null)
             {
                 float randomXPos = Random.Range(leftWall.transform.position.x + 1, rightWall.transform.position.x - 1);
-                Vector3 enemySpawnPoint = new Vector3(randomXPos, 10, 0);
-                enemy.transform.position = enemySpawnPoint;
-                enemy.SetActive(true);
-                StartCoroutine(EnemySpawnCooldown());
+                Vector3 objSpawnPoint = new Vector3(randomXPos, 10, 0);
+                obj.transform.position = objSpawnPoint;
+                obj.SetActive(true);
+                StartCoroutine(ObjectSpawnCooldown());
             }
         }
     }
 
-    IEnumerator EnemySpawnCooldown()
+    IEnumerator ObjectSpawnCooldown()
     {
-        canSpawnEnemy = false;
+        canSpawnObject = false;
         yield return new WaitForSeconds(spawnCooldown);
-        canSpawnEnemy = true;
+        canSpawnObject = true;
     }
 }

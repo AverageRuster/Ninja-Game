@@ -22,7 +22,7 @@ public class EnemyController : MonoBehaviour
             currentEnemyRemains.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>(spritePath + i);
             currentEnemyRemains.transform.position = transform.position;
             currentEnemyRemains.SetActive(true);
-            currentEnemyRemains.GetComponent<Rigidbody2D>().AddForce((-1 * i) * Vector3.left * 100);
+            currentEnemyRemains.GetComponent<Rigidbody2D>().AddForce((-2 * i + 1) * Vector3.left * 250);
         }
 
         gameObject.SetActive(false);

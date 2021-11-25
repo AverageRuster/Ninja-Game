@@ -15,7 +15,8 @@ public class PlayerController : MonoBehaviour
 
     private bool isPlayerMoving = false;
     private bool isPlayerOnTheLeftWall = true;
-    private float playerSpeed = 10000;
+
+    private float playerSpeed = 1000;
     private float maxPlayerSpeed = 20;
 
     GameObject obstacleToAttach;
@@ -35,18 +36,10 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        
         //Проверяем, прикреплен ли игрок к препятствию
-        if (obstacleToAttach == null)
-        {
-            //Двигаем игрока
-            if (isPlayerMoving && rb.velocity.magnitude < maxPlayerSpeed)
-            {
-                rb.AddForce(movementVector * playerSpeed * Time.fixedDeltaTime);
-            }
-        }
-
-        else
-        {        
+        if (obstacleToAttach != null)
+        {       
             //Смотрим, к какой стороне его прикрепить
             float xPos = obstacleToAttach.transform.position.x;
             float yPos = obstacleToAttach.transform.position.y;
@@ -91,7 +84,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            rb.gravityScale = 5f;
+            rb.gravityScale = 2.5f;
         }
     }
 
@@ -116,14 +109,13 @@ public class PlayerController : MonoBehaviour
                 else if (mainTouch.phase == TouchPhase.Ended)
                 {
                     movementVector = (touchTargetPoint - transform.position + new Vector3(0, 0, 10)).normalized;
-                    if (obstacleToAttach != null)
-                    {
-                        obstacleToAttach = null;
-                    }
-                    if (isPlayerOnTheLeftWall && movementVector.x > 0 || !isPlayerOnTheLeftWall && movementVector.x < 0)
+
+                    if (isPlayerOnTheLeftWall && movementVector.x > 0 || !isPlayerOnTheLeftWall && movementVector.x < 0 || obstacleToAttach != null)
                     {
                         rb.velocity = Vector3.zero;
                         isPlayerMoving = true;
+                        obstacleToAttach = null;
+                        rb.AddForce(movementVector * playerSpeed);
                     }
                 }
             }
@@ -135,10 +127,12 @@ public class PlayerController : MonoBehaviour
                     if (movementVector.x >= 0)
                     {
                         movementVector = new Vector3(-0.5f, 0.5f, 0);
+                        rb.AddForce(movementVector * playerSpeed);
                     }
                     else
                     {
                         movementVector = new Vector3(0.5f, 0.5f, 0);
+                        rb.AddForce(movementVector * playerSpeed);
                     }
                 }
             }
