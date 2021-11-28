@@ -15,9 +15,9 @@ public class PlayerController : MonoBehaviour
 
     private bool isPlayerMoving = false;
     private bool isPlayerOnTheLeftWall = true;
+    private bool canPlayerDash = true;
 
     private float playerSpeed = 1000;
-    private float maxPlayerSpeed = 20;
 
     GameObject obstacleToAttach;
 
@@ -119,9 +119,11 @@ public class PlayerController : MonoBehaviour
                     }
                 }
             }
+
+            //Дэш (если игрок в движении)
             else
             {
-                if (mainTouch.phase == TouchPhase.Began)
+                if (mainTouch.phase == TouchPhase.Began && canPlayerDash) 
                 {                  
                     rb.velocity = Vector3.zero;
                     if (movementVector.x >= 0)
@@ -134,6 +136,7 @@ public class PlayerController : MonoBehaviour
                         movementVector = new Vector3(0.5f, 0.5f, 0);
                         rb.AddForce(movementVector * playerSpeed);
                     }
+                    canPlayerDash = false;
                 }
             }
         }
@@ -141,13 +144,27 @@ public class PlayerController : MonoBehaviour
 
     private void SetAnimation()
     {
-        if (isPlayerOnTheLeftWall)
+        if (!isPlayerMoving)
         {
-            animator.Play("LeftWallIdle");
+            if (isPlayerOnTheLeftWall)
+            {
+                animator.Play("LeftWallIdle");
+            }
+            else
+            {
+                animator.Play("RightWallIdle");
+            }
         }
         else
         {
-            animator.Play("RightWallIdle");
+            if (isPlayerOnTheLeftWall)
+            {
+                animator.Play("MovementRight");
+            }
+            else
+            {
+                animator.Play("MovementLeft");
+            }
         }
     }
 
@@ -170,6 +187,7 @@ public class PlayerController : MonoBehaviour
                 isPlayerOnTheLeftWall = false;
             }
             rb.velocity = Vector3.zero;
+            canPlayerDash = true;
             isPlayerMoving = false;
         }
 
@@ -190,6 +208,7 @@ public class PlayerController : MonoBehaviour
         if (collision.CompareTag("Obstacle"))
         {            
             obstacleToAttach = collision.gameObject;
+            canPlayerDash = true;
             isPlayerMoving = false;
         }
 
